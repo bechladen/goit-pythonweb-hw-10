@@ -1,11 +1,27 @@
 from datetime import date
 
-from sqlalchemy import Date, Integer, String, Text
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(DeclarativeBase):
     """Базовий клас для ORM-моделей."""
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[date] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    avatar: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    contacts: Mapped[list["Contact"]] = relationship(back_populates="user", cascade="all, delete")
 
 
 class Contact(Base):
@@ -25,4 +41,7 @@ class Contact(Base):
 
     # Додаткові дані — довільний текст (необовʼязково)
     extra: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    user: Mapped[User] = relationship(back_populates="contacts")
 

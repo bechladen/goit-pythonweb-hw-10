@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from src.api.auth import router as auth_router
 from src.api.contacts import router as contacts_router
 from src.database import init_db
 
@@ -11,6 +12,7 @@ def create_app() -> FastAPI:
         description="REST API для зберігання та управління контактами.",
     )
 
+    app.include_router(auth_router, prefix="/api")
     app.include_router(contacts_router, prefix="/api")
 
     @app.on_event("startup")
