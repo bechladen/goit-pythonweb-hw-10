@@ -1,12 +1,16 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from src.schemas import UserResponse
 from src.services.auth import get_current_user
 
 router = APIRouter(prefix="/users", tags=["users"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.get("/me", response_model=UserResponse)
-async def me(user=Depends(get_current_user)):
+@limiter.limit("10/minute")
+async def me(request: Request, user=Depends(get_current_user)):
     return user
 
