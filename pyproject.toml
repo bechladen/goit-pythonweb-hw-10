@@ -18,6 +18,7 @@ passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 fastapi-mail = "^1.4.1"
 slowapi = "^0.1.9"
+cloudinary = "^1.41.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.6.0"

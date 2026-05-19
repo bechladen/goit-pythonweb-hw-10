@@ -42,3 +42,9 @@ class UsersRepository:
         await self.db.refresh(user)
         return user
 
+    async def update_avatar(self, *, user: User, avatar_url: str) -> User:
+        user.avatar = avatar_url
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
+
