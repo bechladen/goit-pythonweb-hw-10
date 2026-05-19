@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     CLOUDINARY_API_KEY: str | None = None
     CLOUDINARY_API_SECRET: str | None = None
 
+    # CORS
+    # Comma-separated list, e.g. "http://localhost:3000,http://127.0.0.1:3000"
+    CORS_ORIGINS: str = "*"
+
     model_config = ConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
