@@ -5,7 +5,7 @@ from datetime import date, timedelta
 from sqlalchemy import and_, case, extract, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models import Contact
+from src.models import Contact, User
 from src.schemas import ContactCreate, ContactUpdate
 
 
@@ -15,8 +15,8 @@ class ContactsRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create(self, body: ContactCreate) -> Contact:
-        contact = Contact(**body.model_dump())
+    async def create(self, body: ContactCreate, user: User) -> Contact:
+        contact = Contact(**body.model_dump(), user_id=user.id)
         self.db.add(contact)
         await self.db.commit()
         await self.db.refresh(contact)
@@ -27,12 +27,13 @@ class ContactsRepository:
         *,
         skip: int = 0,
         limit: int = 100,
+        user: User,
         q: str | None = None,
         q_first_name: str | None = None,
         q_last_name: str | None = None,
         q_email: str | None = None,
     ) -> list[Contact]:
-        stmt = select(Contact)
+        stmt = select(Contact).where(Contact.user_id == user.id)
 
         filters = []
 
@@ -62,13 +63,13 @@ class ContactsRepository:
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-    async def get_by_id(self, contact_id: int) -> Contact | None:
-        stmt = select(Contact).where(Contact.id == contact_id)
+    async def get_by_id(self, contact_id: int, user: User) -> Contact | None:
+        stmt = select(Contact).where(Contact.id == contact_id, Contact.user_id == user.id)
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def update(self, contact_id: int, body: ContactUpdate) -> Contact | None:
-        contact = await self.get_by_id(contact_id)
+    async def update(self, contact_id: int, body: ContactUpdate, user: User) -> Contact | None:
+        contact = await self.get_by_id(contact_id, user)
         if contact is None:
             return None
 
@@ -80,15 +81,15 @@ class ContactsRepository:
         await self.db.refresh(contact)
         return contact
 
-    async def delete(self, contact_id: int) -> Contact | None:
-        contact = await self.get_by_id(contact_id)
+    async def delete(self, contact_id: int, user: User) -> Contact | None:
+        contact = await self.get_by_id(contact_id, user)
         if contact is None:
             return None
         await self.db.delete(contact)
         await self.db.commit()
         return contact
 
-    async def upcoming_birthdays(self, *, days: int = 7) -> list[Contact]:
+    async def upcoming_birthdays(self, *, days: int = 7, user: User) -> list[Contact]:
         """
         Повертає контакти з днями народження у найближчі N днів.
 
@@ -117,6 +118,7 @@ class ContactsRepository:
             select(Contact)
             .where(
                 and_(
+                    Contact.user_id == user.id,
                     next_birthday >= today,
                     next_birthday <= end_date,
                 )

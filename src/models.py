@@ -2,6 +2,7 @@ from datetime import date
 
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql.schema import UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -28,13 +29,16 @@ class Contact(Base):
     """Модель контакту."""
 
     __tablename__ = "contacts"
+    __table_args__ = (
+        UniqueConstraint("email", "user_id", name="uq_contacts_email_user"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
     first_name: Mapped[str] = mapped_column(String(50), nullable=False)
     last_name: Mapped[str] = mapped_column(String(50), nullable=False)
 
-    email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
+    email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     phone: Mapped[str] = mapped_column(String(30), nullable=False)
 
     birthday: Mapped[date] = mapped_column(Date, nullable=False)

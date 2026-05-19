@@ -3,8 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
 from src.repository.users import UsersRepository
-from src.schemas import UserCreate, UserResponse
-from src.services.passwords import hash_password
+from src.schemas import LoginRequest, TokenResponse, UserCreate, UserResponse
+from src.services.auth import create_access_token
+from src.services.passwords import hash_password, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -21,4 +22,19 @@ async def register_user(body: UserCreate, db: AsyncSession = Depends(get_db)):
 
     user = await repo.create(body, hashed_password=hash_password(body.password))
     return user
+
+
+@router.post("/login", response_model=TokenResponse)
+async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
+    repo = UsersRepository(db)
+    user = await repo.get_by_username(body.username)
+    if user is None or not verify_password(body.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token = create_access_token(subject=user.username)
+    return TokenResponse(access_token=token)
 
