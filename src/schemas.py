@@ -22,6 +22,10 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class RequestEmail(BaseModel):
+    email: EmailStr
+
+
 class UserResponse(UserBase):
     id: int
     avatar: str | None = None
